@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   Text,
@@ -11,17 +11,23 @@ import {
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Ionicons';
-import {InfoPatient} from './components/InfoPatient';
-import {PatientCard} from './components/PatientCard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {RegisterForm} from './components/RegisterForm';
-import {PatientDate} from './interface/interface';
+import { InfoPatient } from './components/InfoPatient';
+import { PatientCard } from './components/PatientCard';
+import { RegisterForm } from './components/RegisterForm';
+import { PatientDate } from './interface/interface';
 
 export const AppAppointments = () => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [patients, setPatients] = useState<PatientDate[]>([]);
   const [patient, setPatient] = useState<PatientDate>({} as PatientDate);
   const [modalPatient, setModalPatient] = useState<boolean>(false);
+
+  useEffect(() => {
+    getDataLocalStorage();
+  }, [])
+
 
   const newDateHandler = () => {
     setModalVisible(modalVisible => !modalVisible);
@@ -37,18 +43,42 @@ export const AppAppointments = () => {
       'Do you want to delete this patient?',
       'Eliminated patient cannot be recovered',
       [
-        {text: 'Cancel'},
+        { text: 'Cancel' },
         {
           text: 'Yes, delete',
           onPress: () => {
             const patientsUpdate = patients.filter(item => item.uid !== id);
 
             setPatients(patientsUpdate);
+            saveDataLocalStorage(JSON.stringify(patientsUpdate));
           },
         },
       ],
     );
   };
+
+  const saveDataLocalStorage = async (dataJSON: string) => {
+    try {
+      await AsyncStorage.setItem('dates', dataJSON);
+    } catch (e) {
+      console.log('Error', e);
+    }
+  }
+
+  const getDataLocalStorage = async () => {
+    const value = await AsyncStorage.getItem('dates');
+
+    if (value !== null) {
+      const dataJSONtoObject: PatientDate[] = JSON.parse(value);
+
+      const dataSaved = dataJSONtoObject.map<PatientDate>((patientDate) => {
+        patientDate.dateDischarge = new Date(patientDate.dateDischarge)
+        return patientDate
+      })
+
+      return setPatients(dataSaved);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,7 +96,7 @@ export const AppAppointments = () => {
               style={styles.listDates}
               data={patients}
               keyExtractor={item => item.uid.toString()}
-              renderItem={({item}) => {
+              renderItem={({ item }) => {
                 return (
                   <PatientCard
                     item={item}
@@ -83,7 +113,7 @@ export const AppAppointments = () => {
         ) : (
           <View style={styles.emptyListContainer}>
             <Icon name="file-tray-outline" size={100} color="#bebebe" />
-            <Text style={{color: '#bebebe'}}>There are no items</Text>
+            <Text style={{ color: '#bebebe' }}>There are no items</Text>
           </View>
         )}
       </View>
@@ -96,6 +126,7 @@ export const AppAppointments = () => {
           patients={patients}
           patient={patient}
           setPatient={setPatient}
+          saveDataLocalStorage={saveDataLocalStorage}
         />
       )}
 

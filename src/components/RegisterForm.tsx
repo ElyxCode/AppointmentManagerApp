@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -10,11 +10,11 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
-import {useForm} from '../hooks/useForm';
+import { useForm } from '../hooks/useForm';
 
 import DatePicker from 'react-native-date-picker';
 
-import {PatientDate} from '../interface/interface';
+import { PatientDate } from '../interface/interface';
 
 interface Props {
   modalVisible: boolean;
@@ -23,6 +23,7 @@ interface Props {
   patients: PatientDate[];
   patient: PatientDate;
   setPatient: React.Dispatch<React.SetStateAction<PatientDate>>;
+  saveDataLocalStorage: (dataJSON: string) => void;
 }
 
 export const RegisterForm = ({
@@ -32,6 +33,7 @@ export const RegisterForm = ({
   patients,
   setPatient,
   patient: patientEdit,
+  saveDataLocalStorage,
 }: Props) => {
   const initialValue: PatientDate = {
     uid: '',
@@ -95,11 +97,13 @@ export const RegisterForm = ({
       );
 
       setPatients(updatePatient);
-      // console.log('updatePatient', updatePatient);
+      saveDataLocalStorage(JSON.stringify(updatePatient))
+
       setPatient({} as PatientDate);
     } else {
       newPatient.uid = Date.now().toString();
       setPatients([...patients, newPatient]);
+      saveDataLocalStorage(JSON.stringify([...patients, newPatient]))
     }
 
     setFormValue(cleanInputs);
@@ -189,7 +193,7 @@ export const RegisterForm = ({
                 date={dateDischarge}
                 locale="en"
                 onDateChange={date =>
-                  setFormValue({...form, dateDischarge: date})
+                  setFormValue({ ...form, dateDischarge: date })
                 }
                 androidVariant="nativeAndroid"
               />
